@@ -1,0 +1,27 @@
+{
+  "name": "media-video",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js",
+    "watch": "watchify public/index.js -o public/bundle.js -v "
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.3",
+    "httpolyglot": "^0.1.2",
+    "mediasoup": "^3.13.24",
+    "mediasoup-client": "^3.7.6",
+    "socket.io": "^4.7.4",
+    "socket.io-client": "^4.7.4",
+    "watchify": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
