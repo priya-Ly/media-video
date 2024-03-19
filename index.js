@@ -3,7 +3,7 @@ const app = express();
 import https from "httpolyglot";
 import path from "path";
 import fs from "fs";
-import mediasoup from "mediasoup";
+import mediasoup, { getSupportedRtpCapabilities } from "mediasoup";
 import { Server } from "socket.io";
 
 let port = 9090;
@@ -60,16 +60,24 @@ peers.on("connection", async (socket) => {
   console.log(socket.id);
   socket.emit("connection-success", {
     socketId: socket.id,
+    existsProducer: producer ? true : false,
   });
   socket.on("disconnect", () => {
     console.log("socket disconnected");
   });
-  router = await worker.createRouter({ mediaCodecs });
-  socket.on("getRtpCapabilities", (callback) => {
+
+  socket.on("createRoom", async (callback) => {
+    if (router === undefined) {
+      router = await worker.createRouter({ mediaCodecs });
+      console.log(`router id ${router.id}`);
+    }
+    getRtpCapabilities(callback);
+  });
+  const getRtpCapabilities = (callback) => {
     const rtpCapabilities = router.rtpCapabilities;
     console.log("rtp rtpCapabilities", rtpCapabilities);
     callback({ rtpCapabilities });
-  });
+  };
   socket.on("createWebRtcTransport", async ({ sender }, callback) => {
     console.log(`is this a sender request ${sender}`);
     if (sender) {

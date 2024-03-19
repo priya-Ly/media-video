@@ -12,6 +12,7 @@ let producerTransport;
 let consumerTransport;
 let producer;
 let consumer;
+let isProducer=false
 let params = {
   encodings: [
     {
@@ -35,6 +36,16 @@ let params = {
     videoGoogleStartBitrate: 1000,
   },
 };
+const goConsume=()=>{
+    goConnect(false)
+}
+const goConnect=(producerOrConsumer)=>{
+    isProducer=producerOrConsumer
+    device === undefined ? getRtpCapabilities() : goCreateTransport()
+}
+const goCreateTransport=()=>{
+    isProducer ? createSendTransport() : createRecvTransport()
+}
 const streamSuccess = async (stream) => {
   localVideo.srcObject = stream;
   const track = stream.getVideoTracks()[0];
@@ -42,9 +53,10 @@ const streamSuccess = async (stream) => {
     track,
     ...params,
   };
+  goConnect(true)
 };
 const getLocalStream = () => {
-  navigator.getUserMedia(
+  navigator.mediaDevices.getUserMedia(
     {
       audio: false,
       video: {
@@ -57,13 +69,13 @@ const getLocalStream = () => {
           max: 1080,
         },
       },
-    },
-    streamSuccess,
-    (error) => {
+    })
+    .then(streamSuccess)
+    .catch((error) => {
       console.log(error, "error from getting local stream");
-    }
-  );
-};
+    })
+  }
+
 
 const createDevice = async () => {
   try {
@@ -75,6 +87,7 @@ const createDevice = async () => {
     });
 
     console.log("RTP Capabilities", device.rtpCapabilities);
+    goCreateTransport()
   } catch (error) {
     console.error(error);
     if (error.name === "UnsupportedError") {
@@ -84,7 +97,7 @@ const createDevice = async () => {
 };
 
 const getRtpCapabilities = async () => {
-  socket.emit("getRtpCapabilities", (data) => {
+  socket.emit("createRoom", (data) => {
     console.log(`router rtp capabilties....${data.rtpCapabilities}`);
     if (typeof data.rtpCapabilities === "object") {
       rtpCapabilities = data.rtpCapabilities;
@@ -92,6 +105,7 @@ const getRtpCapabilities = async () => {
     } else {
       console.error("Invalid RTP capabilities received from the server.");
     }
+    createDevice()
   });
 };
 const createSendTransport = () => {
@@ -141,6 +155,7 @@ const createSendTransport = () => {
           errback(error);
         }
       });
+      connectSendTransport()
     }
   );
 };
@@ -183,6 +198,7 @@ const createRecvTransport = async () => {
           }
         }
       );
+      connectRecvTransport()
     }
   );
 };
@@ -190,7 +206,7 @@ const connectRecvTransport = async () => {
   await socket.emit(
     "consume",
     {
-      rtpCapabilities: device,
+      rtpCapabilities: device.
       rtpCapabilities,
     },
     async ({ params }) => {
@@ -213,9 +229,4 @@ const connectRecvTransport = async () => {
   );
 };
 btnLocalVideo.addEventListener("click", getLocalStream);
-btnRtpCapabilities.addEventListener("click", getRtpCapabilities);
-btnDevice.addEventListener("click", createDevice);
-btnCreateSendTransport.addEventListener("click", createSendTransport);
-btnConnectSendTransport.addEventListener("click", connectSendTransport);
-btnRecvSendTransport.addEventListener("click", createRecvTransport);
-btnConnectRecvTransport.addEventListener("click", connectRecvTransport);
+btnRecvSendTransport.addEventListener("click", goConsume);
